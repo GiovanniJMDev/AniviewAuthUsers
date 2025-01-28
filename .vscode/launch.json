@@ -1,0 +1,14 @@
+{
+  "configurations": [
+    {
+      "type": "java",
+      "name": "Spring Boot-AniviewAuthUsersApplication<auth-users>",
+      "request": "launch",
+      "cwd": "${workspaceFolder}",
+      "mainClass": "com.aniview.authusers.AniviewAuthUsersApplication",
+      "projectName": "auth-users",
+      "args": "",
+      "envFile": "${workspaceFolder}/.env"
+    }
+  ]
+}

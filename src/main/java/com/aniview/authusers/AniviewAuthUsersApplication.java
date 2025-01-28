@@ -10,4 +10,6 @@ public class AniviewAuthUsersApplication {
 		SpringApplication.run(AniviewAuthUsersApplication.class, args);
 	}
 
+	
+
 }
