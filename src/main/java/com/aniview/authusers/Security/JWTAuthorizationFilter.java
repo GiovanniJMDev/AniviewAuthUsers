@@ -5,6 +5,7 @@ import io.jsonwebtoken.Jwts;
 import io.jsonwebtoken.security.Keys;
 import jakarta.servlet.FilterChain;
 import jakarta.servlet.ServletException;
+import jakarta.servlet.http.Cookie;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
@@ -20,8 +21,7 @@ import java.util.stream.Collectors;
 public class JWTAuthorizationFilter extends OncePerRequestFilter {
 
     private static final String SECRET_KEY = "mySecretKey123456789012345678901234567890";
-    private static final String HEADER = "Authorization";
-    private static final String PREFIX = "Bearer ";
+    private static final String COOKIE_NAME = "AUTH_TOKEN";
 
     @Override
     protected void doFilterInternal(HttpServletRequest request, HttpServletResponse response, FilterChain chain)
@@ -44,13 +44,31 @@ public class JWTAuthorizationFilter extends OncePerRequestFilter {
         }
     }
 
+    private boolean checkJWTToken(HttpServletRequest request) {
+        // Verificar si hay cookies y si contienen el AUTH_TOKEN
+        if (request.getCookies() != null) {
+            for (Cookie cookie : request.getCookies()) {
+                if (COOKIE_NAME.equals(cookie.getName())) {
+                    return true;
+                }
+            }
+        }
+        return false;
+    }
+
     private Claims validateToken(HttpServletRequest request) {
-        String jwtToken = request.getHeader(HEADER).replace(PREFIX, "");
-        return Jwts.parserBuilder()
-                .setSigningKey(Keys.hmacShaKeyFor(SECRET_KEY.getBytes(StandardCharsets.UTF_8)))
-                .build()
-                .parseClaimsJws(jwtToken)
-                .getBody();
+        // Obtener el token de las cookies
+        for (Cookie cookie : request.getCookies()) {
+            if (COOKIE_NAME.equals(cookie.getName())) {
+                String jwtToken = cookie.getValue();
+                return Jwts.parserBuilder()
+                        .setSigningKey(Keys.hmacShaKeyFor(SECRET_KEY.getBytes(StandardCharsets.UTF_8)))
+                        .build()
+                        .parseClaimsJws(jwtToken)
+                        .getBody();
+            }
+        }
+        throw new RuntimeException("Token not found or invalid");
     }
 
     private void setUpSpringAuthentication(Claims claims) {
@@ -60,10 +78,5 @@ public class JWTAuthorizationFilter extends OncePerRequestFilter {
                 claims.getSubject(), null,
                 authorities.stream().map(SimpleGrantedAuthority::new).collect(Collectors.toList()));
         SecurityContextHolder.getContext().setAuthentication(auth);
-    }
-
-    private boolean checkJWTToken(HttpServletRequest request) {
-        String authenticationHeader = request.getHeader(HEADER);
-        return authenticationHeader != null && authenticationHeader.startsWith(PREFIX);
     }
 }

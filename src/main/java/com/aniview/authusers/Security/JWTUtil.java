@@ -1,5 +1,6 @@
 package com.aniview.authusers.Security;
 
+import io.jsonwebtoken.Claims;
 import io.jsonwebtoken.Jwts;
 import io.jsonwebtoken.security.Keys;
 import java.nio.charset.StandardCharsets;
@@ -20,4 +21,20 @@ public class JWTUtil {
                 .signWith(Keys.hmacShaKeyFor(SECRET_KEY.getBytes(StandardCharsets.UTF_8)))
                 .compact();
     }
+
+    public static boolean validateToken(String token) {
+        try {
+            // Construir el JwtParser usando Jwts.parserBuilder()
+            Claims claims = Jwts.parserBuilder()
+                    .setSigningKey(Keys.hmacShaKeyFor(SECRET_KEY.getBytes(StandardCharsets.UTF_8))) // Clave segura
+                    .build()
+                    .parseClaimsJws(token)
+                    .getBody();
+            return !claims.getExpiration().before(new Date()); // Verifica que el token no haya expirado
+        } catch (Exception e) {
+            // Si hay un error al decodificar o verificar el token, se considera inválido
+            return false;
+        }
+    }
+
 }
