@@ -1,20 +1,18 @@
 package com.aniview.authusers.Controller;
 
-import com.aniview.authusers.Service.AuthTokenService; // Importa el servicio corregido
-import com.aniview.authusers.Security.JWTUtil; // Asumiendo que este es tu utilitario para JWT
+import com.aniview.authusers.Service.AuthService;
+import com.aniview.authusers.Service.AuthTokenService;
+import com.aniview.authusers.Security.JWTUtil;
+import com.aniview.authusers.Entity.User;
+import com.aniview.authusers.DTO.LoginRequest; // Importa el DTO
+import com.aniview.authusers.DTO.RegisterRequest;
+
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.http.HttpHeaders;
 import org.springframework.http.ResponseEntity;
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RequestParam;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
 
 import jakarta.servlet.http.Cookie;
-import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
-
 import java.util.Collections;
 
 @RestController
@@ -22,44 +20,63 @@ import java.util.Collections;
 public class AuthController {
 
     @Autowired
-    private AuthTokenService authTokenService; // Inyección del servicio correcto
+    private AuthService authService;
+
+    @Autowired
+    private AuthTokenService authTokenService;
 
     @PostMapping("/login")
-    public ResponseEntity<?> login(HttpServletResponse response, @RequestParam("user") String username,
-            @RequestParam("password") String password) {
-        String token = JWTUtil.createToken(username, Collections.singletonList("ROLE_USER"));
-        Cookie cookie = authTokenService.createAuthCookie(token);
-        response.addCookie(cookie); // Añade la cookie directamente
+    public ResponseEntity<?> login(HttpServletResponse response,
+            @RequestBody LoginRequest loginRequest) { // Usa @RequestBody para recibir el objeto JSON
+        String email = loginRequest.getEmail();
+        String password = loginRequest.getPassword();
 
-        String successMessage = "User " + username + " logged in successfully!";
-        return ResponseEntity.ok(Collections.singletonMap("message", successMessage));
+        if (authService.authenticate(email, password)) {
+            String token = JWTUtil.createToken(email, Collections.singletonList("ROLE_USER"));
+            Cookie cookie = authTokenService.createAuthCookie(token);
+            response.addCookie(cookie);
+            return ResponseEntity.ok(Collections.singletonMap("message", "User " + email + " logged in successfully!"));
+        } else {
+            return ResponseEntity.status(401).body(Collections.singletonMap("message", "Invalid credentials"));
+        }
     }
 
-    // Método para verificar el token en la cookie y devolver un mensaje
+    // Endpoint para registrar un nuevo usuario
+    @PostMapping("/register")
+    public ResponseEntity<?> register(@RequestBody RegisterRequest registerRequest) {
+        try {
+            // Llamamos al servicio para registrar al usuario con los datos recibidos en
+            // JSON
+            User newUser = authService.register(
+                    registerRequest.getEmail(),
+                    registerRequest.getName(),
+                    registerRequest.getLastname(),
+                    registerRequest.getUsername(),
+                    registerRequest.getImage(),
+                    registerRequest.getPassword());
+            return ResponseEntity.ok(newUser); // Devuelve el usuario recién registrado
+        } catch (IllegalArgumentException e) {
+            return ResponseEntity.badRequest().body(Collections.singletonMap("message", e.getMessage())); // En caso de
+                                                                                                          // error (por
+                                                                                                          // ejemplo,
+                                                                                                          // correo ya
+                                                                                                          // registrado)
+        } catch (Exception e) {
+            return ResponseEntity.status(500)
+                    .body(Collections.singletonMap("message", "Error en el servidor: " + e.getMessage())); // Captura
+                                                                                                           // cualquier
+                                                                                                           // otra
+                                                                                                           // excepción
+                                                                                                           // no
+                                                                                                           // esperada
+        }
+    }
+
     @GetMapping("/verify")
-    public ResponseEntity<?> verifyToken(HttpServletRequest request) {
-        // Obtener la cookie de la solicitud
-        Cookie[] cookies = request.getCookies();
-
-        // Obtener el token usando el servicio
-        String token = authTokenService.getTokenFromCookie(cookies);
-
-        if (token == null) {
-            return ResponseEntity.status(401)
-                    .body(Collections.singletonMap("message", "No token found, please login first."));
+    public ResponseEntity<?> verifyToken(@CookieValue(value = "auth_token", required = false) String token) {
+        if (token == null || !JWTUtil.validateToken(token)) {
+            return ResponseEntity.status(401).body(Collections.singletonMap("message", "Invalid or missing token"));
         }
-
-        // Validar el token (usando tu clase JWTUtil)
-        boolean isValid = JWTUtil.validateToken(token); // Aquí necesitas un método que valide el token (crea uno en
-                                                        // JWTUtil)
-
-        if (!isValid) {
-            return ResponseEntity.status(401)
-                    .body(Collections.singletonMap("message", "Invalid token. Please login again."));
-        }
-
-        // Si el token es válido, devolver el mensaje de éxito
         return ResponseEntity.ok(Collections.singletonMap("message", "Token is valid. Welcome!"));
     }
-
 }
