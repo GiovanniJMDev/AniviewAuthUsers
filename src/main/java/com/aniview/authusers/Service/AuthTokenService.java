@@ -12,7 +12,7 @@ public class AuthTokenService {
     public Cookie createAuthCookie(String token) {
         Cookie cookie = new Cookie(COOKIE_NAME, token);
         cookie.setHttpOnly(true); // Hace que la cookie sea inaccesible desde JavaScript
-        cookie.setSecure(true); // Asegúrate de usar HTTPS en producción para mayor seguridad
+        // cookie.setSecure(true); // Asegúrate de usar HTTPS en producción para mayor
         cookie.setPath("/"); // Define la ruta a la cual se aplica la cookie
         cookie.setMaxAge(60 * 60 * 24); // Define el tiempo de expiración (en segundos)
         return cookie;

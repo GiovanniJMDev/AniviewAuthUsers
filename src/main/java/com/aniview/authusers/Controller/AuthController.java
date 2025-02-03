@@ -8,6 +8,7 @@ import com.aniview.authusers.DTO.LoginRequest; // Importa el DTO
 import com.aniview.authusers.DTO.RegisterRequest;
 
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
@@ -73,10 +74,18 @@ public class AuthController {
     }
 
     @GetMapping("/verify")
-    public ResponseEntity<?> verifyToken(@CookieValue(value = "auth_token", required = false) String token) {
-        if (token == null || !JWTUtil.validateToken(token)) {
-            return ResponseEntity.status(401).body(Collections.singletonMap("message", "Invalid or missing token"));
+    public ResponseEntity<?> verifyToken(@CookieValue(value = "AUTH_TOKEN", required = false) String token) {
+        if (token == null) {
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
+                    .body(Collections.singletonMap("message", "Token is missing"));
         }
+
+        if (!JWTUtil.validateToken(token)) {
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
+                    .body(Collections.singletonMap("message", "Invalid token"));
+        }
+
+        // Si el token es válido, puedes devolver información adicional si lo deseas
         return ResponseEntity.ok(Collections.singletonMap("message", "Token is valid. Welcome!"));
     }
 }

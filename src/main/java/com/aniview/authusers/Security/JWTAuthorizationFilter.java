@@ -2,6 +2,7 @@ package com.aniview.authusers.Security;
 
 import io.jsonwebtoken.Claims;
 import io.jsonwebtoken.Jwts;
+import io.jsonwebtoken.JwtException;
 import io.jsonwebtoken.security.Keys;
 import jakarta.servlet.FilterChain;
 import jakarta.servlet.ServletException;
@@ -20,8 +21,9 @@ import java.util.stream.Collectors;
 
 public class JWTAuthorizationFilter extends OncePerRequestFilter {
 
-    private static final String SECRET_KEY = "mySecretKey123456789012345678901234567890";
-    private static final String COOKIE_NAME = "AUTH_TOKEN";
+    private static final String SECRET_KEY = "mySecretKey123456789012345678901234567890"; // Debe ser la misma clave en
+                                                                                          // todas las APIs
+    private static final String COOKIE_NAME = "AUTH_TOKEN"; // Nombre de la cookie donde se almacena el token
 
     @Override
     protected void doFilterInternal(HttpServletRequest request, HttpServletResponse response, FilterChain chain)
@@ -29,7 +31,7 @@ public class JWTAuthorizationFilter extends OncePerRequestFilter {
         try {
             if (checkJWTToken(request)) {
                 Claims claims = validateToken(request);
-                if (claims.get("authorities") != null) {
+                if (claims != null && claims.get("authorities") != null) {
                     setUpSpringAuthentication(claims);
                 } else {
                     SecurityContextHolder.clearContext();
@@ -37,11 +39,20 @@ public class JWTAuthorizationFilter extends OncePerRequestFilter {
             } else {
                 SecurityContextHolder.clearContext();
             }
-            chain.doFilter(request, response);
-        } catch (Exception e) {
+        } catch (JwtException e) {
+            // Si el token es inválido, se limpia el contexto y se devuelve un 403
+            SecurityContextHolder.clearContext();
             response.setStatus(HttpServletResponse.SC_FORBIDDEN);
-            response.sendError(HttpServletResponse.SC_FORBIDDEN, e.getMessage());
+            response.getWriter().write("Token inválido o expirado");
+            return;
+        } catch (Exception e) {
+            SecurityContextHolder.clearContext();
+            response.setStatus(HttpServletResponse.SC_FORBIDDEN);
+            response.getWriter().write("Error en la autenticación: " + e.getMessage());
+            return;
         }
+
+        chain.doFilter(request, response);
     }
 
     private boolean checkJWTToken(HttpServletRequest request) {
@@ -57,26 +68,36 @@ public class JWTAuthorizationFilter extends OncePerRequestFilter {
     }
 
     private Claims validateToken(HttpServletRequest request) {
-        // Obtener el token de las cookies
-        for (Cookie cookie : request.getCookies()) {
-            if (COOKIE_NAME.equals(cookie.getName())) {
-                String jwtToken = cookie.getValue();
-                return Jwts.parserBuilder()
-                        .setSigningKey(Keys.hmacShaKeyFor(SECRET_KEY.getBytes(StandardCharsets.UTF_8)))
-                        .build()
-                        .parseClaimsJws(jwtToken)
-                        .getBody();
-            }
+        // Si no hay cookies, devolver null directamente
+        if (request.getCookies() == null) {
+            return null;
         }
-        throw new RuntimeException("Token not found or invalid");
+
+        try {
+            for (Cookie cookie : request.getCookies()) {
+                if (COOKIE_NAME.equals(cookie.getName())) {
+                    String jwtToken = cookie.getValue();
+                    return Jwts.parserBuilder()
+                            .setSigningKey(Keys.hmacShaKeyFor(SECRET_KEY.getBytes(StandardCharsets.UTF_8)))
+                            .build()
+                            .parseClaimsJws(jwtToken)
+                            .getBody();
+                }
+            }
+        } catch (JwtException e) {
+            throw new JwtException("Token inválido o expirado");
+        }
+        return null;
     }
 
     private void setUpSpringAuthentication(Claims claims) {
         @SuppressWarnings("unchecked")
         List<String> authorities = (List<String>) claims.get("authorities");
+
         UsernamePasswordAuthenticationToken auth = new UsernamePasswordAuthenticationToken(
                 claims.getSubject(), null,
                 authorities.stream().map(SimpleGrantedAuthority::new).collect(Collectors.toList()));
+
         SecurityContextHolder.getContext().setAuthentication(auth);
     }
 }

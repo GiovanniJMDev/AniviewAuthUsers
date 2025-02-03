@@ -24,8 +24,8 @@ public class SecurityConfig {
         http
                 .csrf(csrf -> csrf.disable()) // Deshabilitar CSRF
                 .authorizeHttpRequests(authorizeRequests -> authorizeRequests
-                        .requestMatchers("/auth/register", "/auth/login")
-                        .permitAll() // Permitir acceso público a /auth/**
+                        .requestMatchers("/auth/**").permitAll() // Permitir acceso público a /auth/**
+                        .requestMatchers("/auth/verify").authenticated()
                         .anyRequest().authenticated() // Requerir autenticación para cualquier otra solicitud
                 );
 
