@@ -10,6 +10,9 @@ import com.aniview.authusers.DTO.RegisterRequest;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
+import org.springframework.security.core.authority.SimpleGrantedAuthority;
+import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.web.bind.annotation.*;
 
 import jakarta.servlet.http.Cookie;
@@ -42,12 +45,10 @@ public class AuthController {
         }
     }
 
-    // Endpoint para registrar un nuevo usuario
     @PostMapping("/register")
-    public ResponseEntity<?> register(@RequestBody RegisterRequest registerRequest) {
+    public ResponseEntity<?> register(HttpServletResponse response, @RequestBody RegisterRequest registerRequest) {
         try {
-            // Llamamos al servicio para registrar al usuario con los datos recibidos en
-            // JSON
+            // Paso 1: Registrar al usuario
             User newUser = authService.register(
                     registerRequest.getEmail(),
                     registerRequest.getName(),
@@ -55,21 +56,30 @@ public class AuthController {
                     registerRequest.getUsername(),
                     registerRequest.getImage(),
                     registerRequest.getPassword());
-            return ResponseEntity.ok(newUser); // Devuelve el usuario recién registrado
+
+            // Paso 2: Generar el token JWT
+            String token = JWTUtil.createToken(newUser.getEmail(), Collections.singletonList("ROLE_USER"));
+            System.out.println("Generated Token: " + token); // Log para verificar el token
+
+            // Paso 3: Crear la cookie de autenticación
+            Cookie authCookie = authTokenService.createAuthCookie(token);
+
+            // Paso 4: Establecer la cookie en la respuesta
+            response.addCookie(authCookie); // Añadir la cookie en la respuesta
+
+            // Paso 5: Establecer el contexto de seguridad para el usuario registrado
+            UsernamePasswordAuthenticationToken authentication = new UsernamePasswordAuthenticationToken(
+                    newUser.getEmail(), null, Collections.singletonList(new SimpleGrantedAuthority("ROLE_USER")));
+            SecurityContextHolder.getContext().setAuthentication(authentication);
+
+            // Paso 6: Responder con el mensaje de éxito
+            return ResponseEntity.ok(Collections.singletonMap("message", "User registered successfully!"));
+
         } catch (IllegalArgumentException e) {
-            return ResponseEntity.badRequest().body(Collections.singletonMap("message", e.getMessage())); // En caso de
-                                                                                                          // error (por
-                                                                                                          // ejemplo,
-                                                                                                          // correo ya
-                                                                                                          // registrado)
+            return ResponseEntity.badRequest().body(Collections.singletonMap("message", e.getMessage()));
         } catch (Exception e) {
             return ResponseEntity.status(500)
-                    .body(Collections.singletonMap("message", "Error en el servidor: " + e.getMessage())); // Captura
-                                                                                                           // cualquier
-                                                                                                           // otra
-                                                                                                           // excepción
-                                                                                                           // no
-                                                                                                           // esperada
+                    .body(Collections.singletonMap("message", "Server error: " + e.getMessage()));
         }
     }
 

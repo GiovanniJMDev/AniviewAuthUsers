@@ -5,19 +5,18 @@ meta {
 }
 
 post {
-  url: http://localhost:8080/auth/register
+  url: http://localhost:8081/auth/register
   body: json
   auth: none
 }
 
 body:json {
   {
-    "email": "example@example.com",
+    "email": "test@test2.com",
     "name": "John",
     "lastname": "Doe",
-    "username": "johndoe",
-    "image": "https://example.com/image.jpg",
-    "password": "mypassword123"
+    "username": "johndoe2",
+    "password": "test"
   }
   
 }
