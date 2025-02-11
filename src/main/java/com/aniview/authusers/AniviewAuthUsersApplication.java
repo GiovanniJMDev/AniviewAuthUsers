@@ -6,10 +6,8 @@ import org.springframework.boot.autoconfigure.SpringBootApplication;
 @SpringBootApplication
 public class AniviewAuthUsersApplication {
 
-	public static void main(String[] args) {
-		SpringApplication.run(AniviewAuthUsersApplication.class, args);
-	}
-
-	
+    public static void main(String[] args) {
+        SpringApplication.run(AniviewAuthUsersApplication.class, args);
+    }
 
 }

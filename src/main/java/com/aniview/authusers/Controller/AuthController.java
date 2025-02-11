@@ -1,23 +1,29 @@
 package com.aniview.authusers.Controller;
 
-import com.aniview.authusers.Service.AuthService;
-import com.aniview.authusers.Service.AuthTokenService;
-import com.aniview.authusers.Security.JWTUtil;
-import com.aniview.authusers.Entity.User;
-import com.aniview.authusers.DTO.LoginRequest; // Importa el DTO
-import com.aniview.authusers.DTO.RegisterRequest;
+import java.util.Collections;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
-import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
+import org.springframework.security.authentication.UsernamePasswordAuthenticationToken; // Importa el DTO
 import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.security.core.context.SecurityContextHolder;
-import org.springframework.web.bind.annotation.*;
+import org.springframework.web.bind.annotation.CookieValue;
+import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.RequestBody;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RestController;
+
+import com.aniview.authusers.DTO.LoginRequest;
+import com.aniview.authusers.DTO.RegisterRequest;
+import com.aniview.authusers.Entity.User;
+import com.aniview.authusers.Security.JWTUtil;
+import com.aniview.authusers.Service.AuthService;
+import com.aniview.authusers.Service.AuthTokenService;
 
 import jakarta.servlet.http.Cookie;
 import jakarta.servlet.http.HttpServletResponse;
-import java.util.Collections;
 
 @RestController
 @RequestMapping("/auth")

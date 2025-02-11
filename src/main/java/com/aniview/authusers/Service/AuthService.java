@@ -1,14 +1,14 @@
 package com.aniview.authusers.Service;
 
+import org.springframework.security.crypto.password.PasswordEncoder;
+import org.springframework.stereotype.Service;
+
 import com.aniview.authusers.Entity.Auth;
 import com.aniview.authusers.Entity.User;
 import com.aniview.authusers.Repository.AuthRepository;
 import com.aniview.authusers.Repository.UserRepository;
 
 import jakarta.transaction.Transactional;
-
-import org.springframework.security.crypto.password.PasswordEncoder;
-import org.springframework.stereotype.Service;
 
 @Service
 public class AuthService {
@@ -40,7 +40,8 @@ public class AuthService {
             String rawPassword) {
         // Verificar si el correo ya está registrado
         if (userRepository.findByEmail(email).isPresent()) {
-            throw new IllegalArgumentException("El correo ya está registrado");
+            throw new IllegalArgumentException(
+                    "El correo ya está registradoooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooo");
         }
 
         // Crear y guardar el objeto User primero

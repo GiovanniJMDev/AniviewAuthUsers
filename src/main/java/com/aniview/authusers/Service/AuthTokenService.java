@@ -1,7 +1,8 @@
 package com.aniview.authusers.Service;
 
-import jakarta.servlet.http.Cookie;
 import org.springframework.stereotype.Service;
+
+import jakarta.servlet.http.Cookie;
 
 @Service
 public class AuthTokenService {
