@@ -1,4 +1,4 @@
-package com.aniview.authusers.Security;
+package com.aniview.authusers.security;
 
 import java.nio.charset.StandardCharsets;
 import java.util.Date;

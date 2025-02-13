@@ -1,9 +1,8 @@
-package com.aniview.authusers.Security;
+package com.aniview.authusers.security;
 
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
 import java.util.List;
-import java.util.stream.Collectors;
 
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
@@ -64,7 +63,7 @@ public class JWTAuthorizationFilter extends OncePerRequestFilter {
 
     private Claims validateToken(HttpServletRequest request) {
         if (request.getCookies() == null) {
-            return null;
+            return Jwts.claims(); // Return empty claims instead of null
         }
 
         try {
@@ -79,9 +78,11 @@ public class JWTAuthorizationFilter extends OncePerRequestFilter {
                 }
             }
         } catch (JwtException e) {
+            // Si el token es inválido o expirado, lanzamos una excepción, que se maneja más
+            // adelante.
             throw new JwtException("Token inválido o expirado");
         }
-        return null;
+        return Jwts.claims(); // Return empty claims instead of null
     }
 
     private void setUpSpringAuthentication(Claims claims) {
@@ -90,7 +91,7 @@ public class JWTAuthorizationFilter extends OncePerRequestFilter {
 
         UsernamePasswordAuthenticationToken auth = new UsernamePasswordAuthenticationToken(
                 claims.getSubject(), null,
-                authorities.stream().map(SimpleGrantedAuthority::new).collect(Collectors.toList()));
+                authorities.stream().map(SimpleGrantedAuthority::new).toList());
 
         SecurityContextHolder.getContext().setAuthentication(auth);
     }

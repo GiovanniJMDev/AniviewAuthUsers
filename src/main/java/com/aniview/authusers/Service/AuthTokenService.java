@@ -1,4 +1,4 @@
-package com.aniview.authusers.Service;
+package com.aniview.authusers.service;
 
 import org.springframework.stereotype.Service;
 

@@ -1,4 +1,4 @@
-package com.aniview.authusers.DTO;
+package com.aniview.authusers.dto;
 
 public class RegisterRequest {
     private String email;

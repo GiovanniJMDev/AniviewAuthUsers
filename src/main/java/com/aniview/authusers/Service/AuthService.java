@@ -1,12 +1,12 @@
-package com.aniview.authusers.Service;
+package com.aniview.authusers.service;
 
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 
-import com.aniview.authusers.Entity.Auth;
-import com.aniview.authusers.Entity.User;
-import com.aniview.authusers.Repository.AuthRepository;
-import com.aniview.authusers.Repository.UserRepository;
+import com.aniview.authusers.entity.Auth;
+import com.aniview.authusers.entity.User;
+import com.aniview.authusers.repository.AuthRepository;
+import com.aniview.authusers.repository.UserRepository;
 
 import jakarta.transaction.Transactional;
 
