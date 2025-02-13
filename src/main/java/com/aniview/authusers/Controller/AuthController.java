@@ -1,12 +1,12 @@
 package com.aniview.authusers.Controller;
 
 import java.util.Collections;
+import java.util.Map;
 
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
-import org.springframework.security.authentication.UsernamePasswordAuthenticationToken; // Importa el DTO
-import org.springframework.security.core.authority.SimpleGrantedAuthority;
+import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
+import org.springframework.security.core.authority.SimpleGrantedAuthority; // Importa el DTO
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.web.bind.annotation.CookieValue;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -28,21 +28,27 @@ import jakarta.servlet.http.HttpServletResponse;
 @RestController
 @RequestMapping("/auth")
 public class AuthController {
+    private final JWTUtil jwtUtil;
+    private final AuthService authService;
+    private final AuthTokenService authTokenService;
 
-    @Autowired
-    private AuthService authService;
+    // Inyección de dependencias por constructor
+    public AuthController(JWTUtil jwtUtil, AuthService authService, AuthTokenService authTokenService) {
+        this.jwtUtil = jwtUtil;
+        this.authService = authService;
+        this.authTokenService = authTokenService;
+    }
 
-    @Autowired
-    private AuthTokenService authTokenService;
+    private static final String ROLE_USER = "ROLE_USER"; // Definimos la constante
 
     @PostMapping("/login")
-    public ResponseEntity<?> login(HttpServletResponse response,
+    public ResponseEntity<Map<String, String>> login(HttpServletResponse response,
             @RequestBody LoginRequest loginRequest) { // Usa @RequestBody para recibir el objeto JSON
         String email = loginRequest.getEmail();
         String password = loginRequest.getPassword();
 
         if (authService.authenticate(email, password)) {
-            String token = JWTUtil.createToken(email, Collections.singletonList("ROLE_USER"));
+            String token = jwtUtil.createToken(email, Collections.singletonList(ROLE_USER));
             Cookie cookie = authTokenService.createAuthCookie(token);
             response.addCookie(cookie);
             return ResponseEntity.ok(Collections.singletonMap("message", "User " + email + " logged in successfully!"));
@@ -52,7 +58,8 @@ public class AuthController {
     }
 
     @PostMapping("/register")
-    public ResponseEntity<?> register(HttpServletResponse response, @RequestBody RegisterRequest registerRequest) {
+    public ResponseEntity<Map<String, String>> register(HttpServletResponse response,
+            @RequestBody RegisterRequest registerRequest) {
         try {
             // Paso 1: Registrar al usuario
             User newUser = authService.register(
@@ -64,7 +71,7 @@ public class AuthController {
                     registerRequest.getPassword());
 
             // Paso 2: Generar el token JWT
-            String token = JWTUtil.createToken(newUser.getEmail(), Collections.singletonList("ROLE_USER"));
+            String token = jwtUtil.createToken(newUser.getEmail(), Collections.singletonList(ROLE_USER));
             System.out.println("Generated Token: " + token); // Log para verificar el token
 
             // Paso 3: Crear la cookie de autenticación
@@ -75,7 +82,7 @@ public class AuthController {
 
             // Paso 5: Establecer el contexto de seguridad para el usuario registrado
             UsernamePasswordAuthenticationToken authentication = new UsernamePasswordAuthenticationToken(
-                    newUser.getEmail(), null, Collections.singletonList(new SimpleGrantedAuthority("ROLE_USER")));
+                    newUser.getEmail(), null, Collections.singletonList(new SimpleGrantedAuthority(ROLE_USER)));
             SecurityContextHolder.getContext().setAuthentication(authentication);
 
             // Paso 6: Responder con el mensaje de éxito
@@ -90,13 +97,14 @@ public class AuthController {
     }
 
     @GetMapping("/verify")
-    public ResponseEntity<?> verifyToken(@CookieValue(value = "AUTH_TOKEN", required = false) String token) {
+    public ResponseEntity<Map<String, String>> verifyToken(
+            @CookieValue(value = "AUTH_TOKEN", required = false) String token) {
         if (token == null) {
             return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
                     .body(Collections.singletonMap("message", "Token is missing"));
         }
 
-        if (!JWTUtil.validateToken(token)) {
+        if (!jwtUtil.validateToken(token)) {
             return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
                     .body(Collections.singletonMap("message", "Invalid token"));
         }

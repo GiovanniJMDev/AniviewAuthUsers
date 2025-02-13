@@ -1,4 +1,4 @@
-package com.aniview.authusers.Config;
+package com.aniview.authusers.config;
 
 import org.springframework.context.annotation.Configuration;
 import org.springframework.web.servlet.config.annotation.CorsRegistry;
