@@ -1,4 +1,4 @@
-package com.aniview.authusers.Config2;
+package com.aniview.authusers.config;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;

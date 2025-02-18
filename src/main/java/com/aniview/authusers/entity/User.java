@@ -1,4 +1,4 @@
-package com.aniview.authusers.Entity2;
+package com.aniview.authusers.entity;
 
 import java.util.UUID;
 

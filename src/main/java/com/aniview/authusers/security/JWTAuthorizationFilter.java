@@ -1,4 +1,4 @@
-package com.aniview.authusers.Security2;
+package com.aniview.authusers.security;
 
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;

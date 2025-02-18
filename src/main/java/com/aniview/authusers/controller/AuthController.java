@@ -1,4 +1,4 @@
-package com.aniview.authusers.Controller2;
+package com.aniview.authusers.controller;
 
 import java.util.Collections;
 import java.util.Map;

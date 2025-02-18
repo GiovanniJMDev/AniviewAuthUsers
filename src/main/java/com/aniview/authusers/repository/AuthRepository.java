@@ -1,4 +1,4 @@
-package com.aniview.authusers.Repository2;
+package com.aniview.authusers.repository;
 
 import java.util.Optional;
 import java.util.UUID;
