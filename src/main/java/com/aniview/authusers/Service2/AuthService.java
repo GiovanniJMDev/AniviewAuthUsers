@@ -1,4 +1,4 @@
-package com.aniview.authusers.service;
+package com.aniview.authusers.Service2;
 
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
