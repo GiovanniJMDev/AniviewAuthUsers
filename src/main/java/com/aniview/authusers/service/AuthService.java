@@ -41,7 +41,7 @@ public class AuthService {
         // Verificar si el correo ya está registrado
         if (userRepository.findByEmail(email).isPresent()) {
             throw new IllegalArgumentException(
-                    "El correo ya está registradoooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooo");
+                    "El correo ya está registrado"); // Evita la creación de usuarios duplicados
         }
 
         // Crear y guardar el objeto User primero
