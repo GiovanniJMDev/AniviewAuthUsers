@@ -9,7 +9,8 @@
       "projectName": "auth-users",
       "args": "",
       "env": {
-        "SONAR_TOKEN": "squ_414dc013689a2ef52f5c2c6fc08fcaf2e678675b",
+        "COMPOSE_PROJECT_NAME": "aniview_db",
+        "SONAR_TOKEN": "squ_414dc013689a2ef52f5c2c6fc08fcaf2e678675b"
       },
       "envFile": "${workspaceFolder}/.env"
     }
