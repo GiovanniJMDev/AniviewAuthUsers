@@ -17,8 +17,8 @@ import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
-import com.aniview.authusers.dto.LoginRequest;
-import com.aniview.authusers.dto.RegisterRequest;
+import com.aniview.authusers.dto.LoginRequestDto;
+import com.aniview.authusers.dto.RegisterRequestDto;
 import com.aniview.authusers.entity.User;
 import com.aniview.authusers.security.JWTUtil;
 import com.aniview.authusers.service.AuthService;
@@ -43,14 +43,14 @@ public class AuthController {
 
     private static final Logger log = LoggerFactory.getLogger(AuthController.class);
 
-    private static final String ROLE_USER = "ROLE_USER"; // Definimos la constante
-    private static final String MESSAGE_KEY = "message"; // Definimos la constante para el 'message'
+    private static final String ROLE_USER = "ROLE_USER"; 
+    private static final String MESSAGE_KEY = "message"; 
 
     @PostMapping("/login")
     public ResponseEntity<Map<String, String>> login(HttpServletResponse response,
-            @RequestBody LoginRequest loginRequest) { // Usa @RequestBody para recibir el objeto JSON
-        String email = loginRequest.getEmail();
-        String password = loginRequest.getPassword();
+            @RequestBody LoginRequestDto loginRequest) {
+        String email = loginRequest.email();
+        String password = loginRequest.password();
 
         if (authService.authenticate(email, password)) {
             String token = jwtUtil.createToken(email, Collections.singletonList(ROLE_USER));
@@ -65,33 +65,28 @@ public class AuthController {
 
     @PostMapping("/register")
     public ResponseEntity<Map<String, String>> register(HttpServletResponse response,
-            @RequestBody RegisterRequest registerRequest) {
+            @RequestBody RegisterRequestDto registerRequestDto) {
         try {
             // Paso 1: Registrar al usuario
             User newUser = authService.register(
-                    registerRequest.getEmail(),
-                    registerRequest.getName(),
-                    registerRequest.getLastname(),
-                    registerRequest.getUsername(),
-                    registerRequest.getImage(),
-                    registerRequest.getPassword());
+                    registerRequestDto.email(),
+                    registerRequestDto.name(),
+                    registerRequestDto.lastname(),
+                    registerRequestDto.username(),
+                    registerRequestDto.image(),
+                    registerRequestDto.password());
 
-            // Paso 2: Generar el token JWT
             String token = jwtUtil.createToken(newUser.getEmail(), Collections.singletonList(ROLE_USER));
             log.info("Generated Token: {}", token);
 
-            // Paso 3: Crear la cookie de autenticación
             Cookie authCookie = authTokenService.createAuthCookie(token);
 
-            // Paso 4: Establecer la cookie en la respuesta
-            response.addCookie(authCookie); // Añadir la cookie en la respuesta
+            response.addCookie(authCookie);
 
-            // Paso 5: Establecer el contexto de seguridad para el usuario registrado
             UsernamePasswordAuthenticationToken authentication = new UsernamePasswordAuthenticationToken(
                     newUser.getEmail(), null, Collections.singletonList(new SimpleGrantedAuthority(ROLE_USER)));
             SecurityContextHolder.getContext().setAuthentication(authentication);
 
-            // Paso 6: Responder con el mensaje de éxito
             return ResponseEntity.ok(Collections.singletonMap(MESSAGE_KEY, "User registered successfully!"));
 
         } catch (IllegalArgumentException e) {
