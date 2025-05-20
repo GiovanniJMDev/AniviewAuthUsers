@@ -16,7 +16,6 @@ import io.jsonwebtoken.Jwts;
 import io.jsonwebtoken.security.Keys;
 import jakarta.servlet.FilterChain;
 import jakarta.servlet.ServletException;
-import jakarta.servlet.http.Cookie;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 
@@ -24,7 +23,6 @@ public class JWTAuthorizationFilter extends OncePerRequestFilter {
 
     @Value("${jwt.secretKey}")
     private String secretKey;
-    private static final String COOKIE_NAME = "AUTH_TOKEN";
 
     @Override
     protected void doFilterInternal(HttpServletRequest request, HttpServletResponse response, FilterChain chain)
@@ -51,38 +49,25 @@ public class JWTAuthorizationFilter extends OncePerRequestFilter {
     }
 
     private boolean checkJWTToken(HttpServletRequest request) {
-        if (request.getCookies() != null) {
-            for (Cookie cookie : request.getCookies()) {
-                if (COOKIE_NAME.equals(cookie.getName())) {
-                    return true;
-                }
-            }
-        }
-        return false;
+        String authorizationHeader = request.getHeader("Authorization");
+        return authorizationHeader != null && authorizationHeader.startsWith("Bearer ");
     }
 
     private Claims validateToken(HttpServletRequest request) {
-        if (request.getCookies() == null) {
-            return Jwts.claims(); // Return empty claims instead of null
-        }
-
-        try {
-            for (Cookie cookie : request.getCookies()) {
-                if (COOKIE_NAME.equals(cookie.getName())) {
-                    String jwtToken = cookie.getValue();
-                    return Jwts.parserBuilder()
-                            .setSigningKey(Keys.hmacShaKeyFor(secretKey.getBytes(StandardCharsets.UTF_8)))
-                            .build()
-                            .parseClaimsJws(jwtToken)
-                            .getBody();
-                }
+        String token = request.getHeader("Authorization"); // Obtén el token del encabezado
+        if (token != null && token.startsWith("Bearer ")) {
+            token = token.substring(7); // Elimina el prefijo "Bearer " para obtener el token puro
+            try {
+                return Jwts.parserBuilder()
+                        .setSigningKey(Keys.hmacShaKeyFor(secretKey.getBytes(StandardCharsets.UTF_8)))
+                        .build()
+                        .parseClaimsJws(token)
+                        .getBody();
+            } catch (JwtException e) {
+                throw new JwtException("Token inválido o expirado");
             }
-        } catch (JwtException e) {
-            // Si el token es inválido o expirado, lanzamos una excepción, que se maneja más
-            // adelante.
-            throw new JwtException("Token inválido o expirado");
         }
-        return Jwts.claims(); // Return empty claims instead of null
+        return null;
     }
 
     private void setUpSpringAuthentication(Claims claims) {
